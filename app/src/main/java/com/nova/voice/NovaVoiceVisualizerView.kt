@@ -76,6 +76,24 @@ class NovaVoiceVisualizerView(context: Context, private val tap: () -> Unit) : V
     private fun drawRecognized(c:Canvas,w:Float,h:Float) { drawWave(c,w,h*.34f,.72f,blue,violet); text(c,recognizedText,w/2,h*.50f,21f,white,Paint.Align.CENTER); rounded(c,w*.16f,h*.55f,w*.84f,h*.62f,Color.argb(35,100,120,220),Color.argb(100,100,115,210)); text(c,"“$recognizedText”",w/2,h*.595f,15f,white,Paint.Align.CENTER); drawMic(c,w/2,h-125f,1f) }
     private fun drawError(c:Canvas,w:Float,h:Float) { drawWave(c,w,h*.40f,.8f,pink,Color.rgb(255,90,130)); for(i in 0..18){ val x=w*(.15f+Random.nextFloat()*.7f); val y=h*(.26f+Random.nextFloat()*.24f); paint.color=Color.argb(150,255,55,150); c.rotate(Random.nextFloat()*50-25,x,y); c.drawRect(x,y,x+Random.nextFloat()*8+2,y+Random.nextFloat()*3+2,paint); c.rotate(-(Random.nextFloat()*50-25),x,y) }; text(c,"I didn't catch that",w/2,h*.60f,19f,white,Paint.Align.CENTER); text(c,"Please try again",w/2,h*.645f,13f,muted,Paint.Align.CENTER); drawMic(c,w/2,h-125f,.9f) }
 
+    private fun drawRibbon(c: Canvas, w: Float, h: Float, scale: Float, first: Int, second: Int, width: Float) {
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 1.2f
+        for (layer in 0..5) {
+            val path = Path()
+            for (x in 0..w.toInt() step 5) {
+                val y = h * (.58f + layer * .012f) +
+                    sin(x * .012f + time * 1.2f + layer) * width * scale +
+                    sin(x * .026f - time + layer) * width * .35f
+                if (x == 0) path.moveTo(x.toFloat(), y) else path.lineTo(x.toFloat(), y)
+            }
+            val color = if (layer % 2 == 0) first else second
+            paint.color = Color.argb(115 - layer * 12, color.red(), color.green(), color.blue())
+            c.drawPath(path, paint)
+        }
+        paint.style = Paint.Style.FILL
+    }
+
     private fun drawHorizon(c:Canvas,w:Float,h:Float) { paint.shader=RadialGradient(w*.25f,h*.86f,h*.62f,Color.argb(100,30,85,180),Color.TRANSPARENT,Shader.TileMode.CLAMP); c.drawCircle(w*.28f,h*.96f,h*.62f,paint); paint.shader=null; paint.style=Paint.Style.STROKE; paint.strokeWidth=1.2f; paint.color=Color.argb(130,60,125,245); c.drawArc(-w*.35f,h*.67f,w*1.15f,h*1.45f,190f,170f,false,paint); paint.style=Paint.Style.FILL }
     private fun drawOrb(c:Canvas,w:Float,y:Float,scale:Float) { val r=105f*scale; val t=themes[themeIndex]; paint.shader=RadialGradient(w,y,r*.95f,Color.argb(100,Color.red(t.primary),Color.green(t.primary),Color.blue(t.primary)),Color.TRANSPARENT,Shader.TileMode.CLAMP); c.drawCircle(w,y,r*1.35f,paint); paint.shader=null; for(i in 0..6){ paint.style=Paint.Style.STROKE; paint.strokeWidth=1.2f+(i%2); val col=if(i%2==0)t.primary else t.secondary; paint.color=Color.argb(150,col.red(),col.green(),col.blue()); val rr=r*(.7f+i*.12f); c.save(); c.rotate(time*28f+i*25f,w,y); c.drawOval(w-rr,y-rr*.48f,w+rr,y+rr*.48f,paint); c.restore() }; paint.style=Paint.Style.FILL; for(i in 0..22){ val a=time*1.2f+i*2.2f; paint.color=Color.argb(160,Color.red(t.accent),Color.green(t.accent),Color.blue(t.accent)); c.drawCircle(w+cos(a)*r*(.45f+.5f*(i%3)/2f),y+sin(a)*r*.7f,1.2f,paint) } }
     private fun drawWave(c:Canvas,w:Float,y:Float,scale:Float,a: Int,b:Int) { val t=themes[themeIndex]; val first=if(state==NovaState.ERROR) t.secondary else t.primary; val second=if(state==NovaState.ERROR) t.accent else t.secondary; paint.style=Paint.Style.STROKE; paint.strokeWidth=2.2f; for(j in 0..3){ val p=Path(); for(x in 0..w.toInt() step 5){ val yy=y+sin(x*.018f+time*2.2f+j)*32f*scale+sin(x*.041f-time+j)*10f; if(x==0)p.moveTo(x.toFloat(),yy) else p.lineTo(x.toFloat(),yy) }; val col=if(j%2==0)first else second; paint.color=Color.argb(125-j*18,Color.red(col),Color.green(col),Color.blue(col)); c.drawPath(p,paint) }; paint.style=Paint.Style.FILL; if(state==NovaState.LISTENING){ for(i in -8..8){ val xx=w/2+i*10; val hh=(20+abs(sin(time*4+i))*45)*(1+rms); paint.color=Color.argb(200,Color.red(t.accent),Color.green(t.accent),Color.blue(t.accent)); c.drawRoundRect(xx-2,y-hh,xx+2,y+hh,2f,2f,paint) } } }
